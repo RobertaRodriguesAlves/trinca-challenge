@@ -7,6 +7,9 @@ namespace Domain.Entities
 {
     public class Bbq : AggregateRoot
     {
+        private readonly int _kilogram = 1000;
+        private readonly int _confirmationQuantity = 7; 
+
         public string? Reason { get; set; }
         public BbqStatus Status { get; set; }
         public DateTime Date { get; set; }
@@ -42,7 +45,7 @@ namespace Domain.Entities
                 Shop.Add(shopList);
             }
 
-            if (Shop.GroupBy(bbq => bbq.BbqId).Count() == 7 && Status != BbqStatus.Confirmed)
+            if (Shop.GroupBy(bbq => bbq.BbqId).Count() == _confirmationQuantity && Status != BbqStatus.Confirmed)
             {
                 Status = BbqStatus.Confirmed;
             }
@@ -56,7 +59,7 @@ namespace Domain.Entities
                 Shop.RemoveAll(s => s.PersonId == invite.PersonId);
             }
 
-            if (Shop.GroupBy(bbq => bbq.BbqId).Count() < 7 && Status != BbqStatus.PendingConfirmations)
+            if (Shop.GroupBy(bbq => bbq.BbqId).Count() < _confirmationQuantity && Status != BbqStatus.PendingConfirmations)
             {
                 Status = BbqStatus.PendingConfirmations;
             }
@@ -74,8 +77,8 @@ namespace Domain.Entities
                      .GroupBy(bbq => bbq.BbqId)
                      .Select(bbq => new
                      {
-                         Vegetables = $"{bbq.Sum(v => v.Vegetable) / 1000} KG",
-                         Meat = $"{bbq.Sum(v => v.Meat) / 1000} KG"
+                         Vegetables = bbq.Sum(v => v.Vegetable) / _kilogram,
+                         Meat = bbq.Sum(v => v.Meat) / _kilogram
                      })
             };
         }

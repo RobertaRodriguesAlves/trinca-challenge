@@ -8,14 +8,14 @@ namespace Serverless_Api
     public partial class RunModerateBbq
     {
         private readonly IChurrasService _bbqService;
-        private readonly IInviteService _invateService;
+        private readonly IInviteService _inviteService;
 
         public RunModerateBbq(
             IChurrasService bbqService,
             IInviteService invateService)
         {
             _bbqService = bbqService;
-            _invateService = invateService;
+            _inviteService = invateService;
         }
 
         [Function(nameof(RunModerateBbq))]
@@ -33,7 +33,7 @@ namespace Serverless_Api
                 return req.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            await _invateService.UpdateAsync(churras, moderationRequest.GonnaHappen);
+            await _inviteService.UpdateAsync(churras, moderationRequest.GonnaHappen);
 
             return await req.CreateResponse(HttpStatusCode.Created, churras!.TakeSnapshot());
         }
