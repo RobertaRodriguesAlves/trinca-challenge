@@ -1,7 +1,6 @@
 ﻿using Domain.Events;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 
 namespace Domain.Entities
@@ -43,7 +42,7 @@ namespace Domain.Entities
                 Shop.Add(shopList);
             }
 
-            if (Shop.GroupBy(bbq => bbq.BbqId).Count() >= 7 && Status != BbqStatus.Confirmed)
+            if (Shop.GroupBy(bbq => bbq.BbqId).Count() == 7 && Status != BbqStatus.Confirmed)
             {
                 Status = BbqStatus.Confirmed;
             }
