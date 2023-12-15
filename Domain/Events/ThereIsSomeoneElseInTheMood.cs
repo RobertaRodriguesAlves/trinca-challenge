@@ -4,17 +4,17 @@ namespace Domain.Events
 {
     public class ThereIsSomeoneElseInTheMood : IEvent
     {
-        public ThereIsSomeoneElseInTheMood(Guid id, DateTime date, string reason, bool isTrincasPaying)
+        public ThereIsSomeoneElseInTheMood(DateTime date, string reason, bool isTrincasPaying)
         {
-            Id = id;
+            Id = Guid.NewGuid();
             Date = date;
             Reason = reason;
             IsTrincasPaying = isTrincasPaying;
         }
 
-        public Guid Id { get; set; }
-        public string Reason { get; set; }
-        public bool IsTrincasPaying { get; set; }
-        public DateTime Date { get; set; }
+        public Guid Id { get; }
+        public string Reason { get; }
+        public bool IsTrincasPaying { get; }
+        public DateTime Date { get; }
     }
 }

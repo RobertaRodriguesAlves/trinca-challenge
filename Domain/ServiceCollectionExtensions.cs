@@ -1,14 +1,15 @@
-﻿using System;
-using Eveneum;
-using System.Linq;
-using CrossCutting;
+﻿using CrossCutting;
+using Domain.Abstractions;
 using Domain.Entities;
-using System.Threading.Tasks;
 using Domain.Events;
 using Domain.Repositories;
+using Eveneum;
 using Microsoft.Azure.Cosmos;
-using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
+using Scrutor;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Domain
 {
@@ -18,6 +19,7 @@ namespace Domain
         public static IServiceCollection AddDomainDependencies(this IServiceCollection services)
             => services.AddSingleton(new Person { Id = "e5c7c990-7d75-4445-b5a2-700df354a6a0" })
                 .AddEventStoreDependencies()
+                .AddAppServices()
                 .AddRepositoriesDependencies();
 
         public static IServiceCollection AddEventStoreDependencies(this IServiceCollection services)
@@ -47,7 +49,7 @@ namespace Domain
                         .GetResult();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Console.WriteLine("skipping already included data.");
             }
@@ -61,13 +63,22 @@ namespace Domain
         }
 
         public static IServiceCollection AddRepositoriesDependencies(this IServiceCollection services)
-            => services.AddTransient<IBbqRepository, BbqRepository>()
-            .AddTransient<IPersonRepository, PersonRepository>();
+            => services
+                .AddTransient<IBbqRepository, BbqRepository>()
+                .AddTransient<IPersonRepository, PersonRepository>();
 
-        private async static Task CreateIfNotExists(this CosmosClient client, string database, string collection)
+        public static IServiceCollection AddAppServices(this IServiceCollection services)
         {
-            var databaseResponse = await client.CreateDatabaseIfNotExistsAsync(database);
-            await databaseResponse.Database.CreateContainerIfNotExistsAsync(new ContainerProperties(collection, "/StreamId"));
+            // Adicionando automaticamente todos os serviços no ASP.NET Core DI que herdam a interface IAppService
+            // REF: https://github.com/khellang/Scrutor
+            services
+                .Scan(s => s.FromCallingAssembly()
+                .AddClasses(c => c.AssignableTo<IAppService>())
+                .UsingRegistrationStrategy(RegistrationStrategy.Skip)
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+            return services;
         }
     }
 
