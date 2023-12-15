@@ -135,15 +135,7 @@ namespace Domain.Services
             return person;
         }
 
-        public async Task<IEnumerable<Invite>> GetAsync(string userId)
-        {
-            var person = await _repository.GetAsync(userId);
-            if (person is null)
-            {
-                return Enumerable.Empty<Invite>();
-            }
-
-            return person.Invites.Where(e => e.Date > DateTime.Now && e.Status != InviteStatus.Declined);
-        }
+        public async Task<Person?> GetAsync(string userId)
+            => await _repository.GetAsync(userId);
     }
 }

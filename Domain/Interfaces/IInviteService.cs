@@ -12,6 +12,6 @@ namespace Domain.Interfaces
         Task<IEnumerable<object>> GetChurrasAsync(string userId);
         Task<Person?> AcceptInvitationAsync(string userId, string inviteId, bool isVeg);
         Task<Person?> DeclineInvitationAsync(string userId, string inviteId);
-        Task<IEnumerable<Invite>> GetAsync(string userId);
+        Task<Person?> GetAsync(string userId);
     }
 }

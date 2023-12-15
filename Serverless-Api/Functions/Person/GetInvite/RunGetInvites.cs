@@ -22,13 +22,13 @@ namespace Serverless_Api
         [Function(nameof(RunGetInvites))]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "person/invites")] HttpRequestData req)
         {
-            var invites = await _service.GetAsync(_user.Id!);
-            if (invites?.Any() ?? false)
+            var person = await _service.GetAsync(_user.Id!);
+            if (person is null)
             {
                 return req.CreateResponse(HttpStatusCode.NoContent);
             }
 
-            return await req.CreateResponse(HttpStatusCode.OK, invites);
+            return await req.CreateResponse(HttpStatusCode.OK, person!.TakeSnapshot());
         }
     }
 }
