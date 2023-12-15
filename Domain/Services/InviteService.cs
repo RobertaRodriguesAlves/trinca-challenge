@@ -26,53 +26,47 @@ namespace Domain.Services
             _bbqRepository = bbqRepository;
         }
 
-        public async Task CreateAsync(Bbq? churras)
+        public async Task CreateAsync(Bbq churras)
         {
-            if (churras != null)
-            {
-                var Lookups = await _snapshot.AsQueryable<Lookups>("Lookups").SingleOrDefaultAsync();
+            var lookups = await _snapshot.AsQueryable<Lookups>("Lookups").SingleOrDefaultAsync();
 
-                foreach (var personId in Lookups.ModeratorIds)
+            foreach (var personId in lookups.ModeratorIds)
+            {
+                var person = await _repository.GetAsync(personId);
+                if (person is null)
                 {
-                    var person = await _repository.GetAsync(personId);
-                    if (person is null)
-                    {
-                        continue;
-                    }
-                    person!.Apply(new PersonHasBeenInvitedToBbq(personId, churras!.Id, churras!.Date, churras!.Reason));
-                    await _repository.SaveAsync(person);
+                    continue;
                 }
+                person!.Apply(new PersonHasBeenInvitedToBbq(personId, churras!.Id, churras!.Date, churras!.Reason));
+                await _repository.SaveAsync(person);
             }
         }
 
-        public async Task UpdateAsync(Bbq? churras, bool gonnaHappen)
+        public async Task UpdateAsync(Bbq churras, bool gonnaHappen)
         {
-            if (churras != null)
+            var lookups = await _snapshot.AsQueryable<Lookups>("Lookups").SingleOrDefaultAsync();
+
+            foreach (var personId in lookups.PeopleIds.Except(lookups.ModeratorIds))
             {
-                var lookups = await _snapshot.AsQueryable<Lookups>("Lookups").SingleOrDefaultAsync();
-
-                foreach (var personId in lookups.PeopleIds.Except(lookups.ModeratorIds))
+                var person = await _repository.GetAsync(personId);
+                if (person is null)
                 {
-                    var person = await _repository.GetAsync(personId);
-                    if (person is null)
-                    {
-                        continue;
-                    }
-
-                    if (gonnaHappen)
-                    {
-                        if (!person!.Invites.Any(p => p.Bbq == churras!.Id))
-                        {
-                            person.Apply(new PersonHasBeenInvitedToBbq(person.Id, churras!.Id, churras!.Date, churras!.Reason));
-                        }
-                    }
-                    else
-                    {
-                        person!.Apply(new InviteWasDeclined(churras!.Id, person.Id));
-                    }
-
-                    await _repository.SaveAsync(person);
+                    continue;
                 }
+
+                if (gonnaHappen)
+                {
+                    if (!person!.Invites.Any(p => p.Bbq == churras!.Id))
+                    {
+                        person.Apply(new PersonHasBeenInvitedToBbq(person.Id, churras!.Id, churras!.Date, churras!.Reason));
+                    }
+                }
+                else
+                {
+                    person!.Apply(new InviteWasDeclined(churras!.Id, person.Id));
+                }
+
+                await _repository.SaveAsync(person);
             }
         }
 
@@ -85,9 +79,9 @@ namespace Domain.Services
             }
 
             var snapshots = new List<object>();
-            foreach (var churrasId in moderator!.Invites.Where(i => i.Date >= DateTime.Now).Select(b => b.Id))
+            foreach (var churrasId in moderator!.Invites.Where(i => i.Date >= DateTime.Now).Select(b => b.Id!))
             {
-                var churras = await _bbqRepository.GetAsync(churrasId!);
+                var churras = await _bbqRepository.GetAsync(churrasId);
                 if (churras is null || churras?.Status == BbqStatus.ItsNotGonnaHappen || churras?.Status == BbqStatus.PendingConfirmations)
                 {
                     continue;

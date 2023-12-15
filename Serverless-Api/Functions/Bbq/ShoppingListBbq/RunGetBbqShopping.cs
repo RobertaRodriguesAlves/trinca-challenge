@@ -24,11 +24,16 @@ namespace Serverless_Api.Functions.Bbq.ShoppingListBbq
         {
             if (!_person.IsCoOwner)
             {
-                return await req.CreateResponse(HttpStatusCode.Unauthorized, null);
+                return req.CreateResponse(HttpStatusCode.Unauthorized);
             }
 
             var churras = await _service.GetShoppingList(inviteId);
-            return await req.CreateResponse(churras != null ? HttpStatusCode.OK : HttpStatusCode.BadRequest, churras);
+            if (churras is null)
+            {
+                return req.CreateResponse(HttpStatusCode.NoContent);
+            }
+
+            return await req.CreateResponse(HttpStatusCode.OK, churras!.TakeSnapshot());
         }
     }
 }

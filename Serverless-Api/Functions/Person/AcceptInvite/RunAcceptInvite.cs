@@ -25,7 +25,7 @@ namespace Serverless_Api
                 return await req.CreateResponse(HttpStatusCode.BadRequest, "input is required.");
             }
 
-            var person = await _service.AcceptInvitationAsync(_user.Id, inviteId, answer!.IsVeg);
+            var person = await _service.AcceptInvitationAsync(_user.Id!, inviteId, answer!.IsVeg);
             if (person is null)
             {
                 return req.CreateResponse(HttpStatusCode.NoContent);

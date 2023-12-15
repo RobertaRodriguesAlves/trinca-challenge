@@ -9,6 +9,6 @@ namespace Domain.Interfaces
     {
         Task<Bbq> CreateAsync(DateTime date, string reason, bool isTrincaPaying);
         Task<Bbq?> UpdateAsync(string id, bool gonnaHappen, bool trincaWillPay);
-        Task<object?> GetShoppingList(string inviteId);
+        Task<Bbq?> GetShoppingList(string inviteId);
     }
 }

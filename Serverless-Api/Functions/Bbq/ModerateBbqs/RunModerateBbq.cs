@@ -24,13 +24,18 @@ namespace Serverless_Api
             var moderationRequest = await req.Body<ModerateBbqRequest>();
             if (moderationRequest is null)
             {
-                return await req.CreateResponse(HttpStatusCode.BadRequest, "input is required.");
+                return req.CreateResponse(HttpStatusCode.BadRequest);
             }
 
             var churras = await _bbqService.UpdateAsync(id, moderationRequest.GonnaHappen, moderationRequest.TrincaWillPay);
+            if (churras is null)
+            {
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
             await _invateService.UpdateAsync(churras, moderationRequest.GonnaHappen);
 
-            return await req.CreateResponse(churras is null ? HttpStatusCode.BadRequest : HttpStatusCode.Created, churras?.TakeSnapshot());
+            return await req.CreateResponse(HttpStatusCode.Created, churras!.TakeSnapshot());
         }
     }
 }

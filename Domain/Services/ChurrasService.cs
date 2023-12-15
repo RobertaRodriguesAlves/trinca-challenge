@@ -37,15 +37,7 @@ namespace Domain.Services
             return churras;
         }
 
-        public async Task<object?> GetShoppingList(string inviteId)
-        {
-            var churras = await _repository.GetAsync(inviteId);
-            if (churras is null)
-            {
-                return null;
-            }
-
-            return churras!.TakeSnapshot();
-        }
+        public async Task<Bbq?> GetShoppingList(string inviteId)
+            => await _repository.GetAsync(inviteId);
     }
 }

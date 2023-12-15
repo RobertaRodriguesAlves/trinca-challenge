@@ -24,13 +24,18 @@ namespace Serverless_Api
             var input = await req.Body<NewBbqRequest>();
             if (input is null)
             {
-                return await req.CreateResponse(HttpStatusCode.BadRequest, "input is required.");
+                return req.CreateResponse(HttpStatusCode.BadRequest);
             }
 
             var churras = await _churrasService.CreateAsync(input.Date, input.Reason, input.IsTrincasPaying);
+            if (churras is null)
+            {
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
             await _inviteService.CreateAsync(churras);
 
-            return await req.CreateResponse(churras is null ? HttpStatusCode.BadRequest : HttpStatusCode.Created, churras?.TakeSnapshot());
+            return await req.CreateResponse(HttpStatusCode.Created, churras?.TakeSnapshot());
         }
     }
 }

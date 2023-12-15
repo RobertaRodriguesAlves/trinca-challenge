@@ -20,7 +20,7 @@ namespace Serverless_Api
         [Function(nameof(RunGetProposedBbqs))]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "churras")] HttpRequestData req)
         {
-            var snapshots = await _service.GetChurrasAsync(_user.Id);
+            var snapshots = await _service.GetChurrasAsync(_user.Id!);
             return await req.CreateResponse(snapshots.Any() ? HttpStatusCode.Created : HttpStatusCode.BadRequest, snapshots);
         }
     }
