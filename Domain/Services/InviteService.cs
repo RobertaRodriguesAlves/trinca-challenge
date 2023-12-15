@@ -82,10 +82,10 @@ namespace Domain.Services
             }
 
             var snapshots = new List<object>();
-            foreach (var churrasId in moderator!.Invites.Where(i => i.Date > DateTime.Now).Select(b => b.Id))
+            foreach (var churrasId in moderator!.Invites.Where(i => i.Date >= DateTime.Now).Select(b => b.Id))
             {
                 var churras = await _bbqRepository.GetAsync(churrasId!);
-                if (churras is null || churras?.Status == BbqStatus.ItsNotGonnaHappen)
+                if (churras is null || churras?.Status == BbqStatus.ItsNotGonnaHappen || churras?.Status == BbqStatus.PendingConfirmations)
                 {
                     continue;
                 }
