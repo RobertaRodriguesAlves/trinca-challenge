@@ -1,8 +1,8 @@
-using Domain;
 using Domain.Entities;
 using Domain.Repositories;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using System.Net;
 
 namespace Serverless_Api
 {
@@ -21,11 +21,12 @@ namespace Serverless_Api
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "person/invites")] HttpRequestData req)
         {
             var person = await _repository.GetAsync(_user.Id);
+            if (person is null)
+            {
+                return req.CreateResponse(HttpStatusCode.NoContent);
+            }
 
-            if (person == null)
-                return req.CreateResponse(System.Net.HttpStatusCode.NoContent);
-
-            return await req.CreateResponse(System.Net.HttpStatusCode.OK, person.TakeSnapshot());
+            return await req.CreateResponse(HttpStatusCode.OK, person!.TakeSnapshot());
         }
     }
 }

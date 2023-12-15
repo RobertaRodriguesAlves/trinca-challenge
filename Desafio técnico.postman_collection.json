@@ -155,6 +155,43 @@
 			"response": []
 		},
 		{
+			"name": "Lista de compras",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "personId",
+						"value": "{{moderador-1}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"isCoOwner\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:7296/api/churras/765b7672-8111-4b99-a8bd-75f0020916ff/shopping",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7296",
+					"path": [
+						"api",
+						"churras",
+						"765b7672-8111-4b99-a8bd-75f0020916ff",
+						"shopping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Aceitar convite",
 			"request": {
 				"method": "PUT",

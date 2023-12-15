@@ -7,14 +7,9 @@ namespace Domain
 {
     public abstract class AggregateRoot
     {
-        public string Id { get; set; }
+        public string? Id { get; set; }
         public ulong Version { get; private set; }
-        public List<IEvent> Changes { get; }
-
-        public AggregateRoot()
-        {
-            Changes = new List<IEvent>();
-        }
+        public List<IEvent> Changes { get; } = new List<IEvent>();
 
         public void Rehydrate(IEnumerable<IEvent> events)
         {
