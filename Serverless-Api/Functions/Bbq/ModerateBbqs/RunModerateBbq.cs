@@ -1,47 +1,36 @@
-using CrossCutting;
-using Domain.Entities;
-using Domain.Events;
-using Domain.Repositories;
+using Domain.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using System.Net;
 
 namespace Serverless_Api
 {
     public partial class RunModerateBbq
     {
-        private readonly SnapshotStore _snapshots;
-        private readonly IPersonRepository _persons;
-        private readonly IBbqRepository _repository;
+        private readonly IChurrasService _bbqService;
+        private readonly IInviteService _invateService;
 
-        public RunModerateBbq(IBbqRepository repository, SnapshotStore snapshots, IPersonRepository persons)
+        public RunModerateBbq(
+            IChurrasService bbqService,
+            IInviteService invateService)
         {
-            _persons = persons;
-            _snapshots = snapshots;
-            _repository = repository;
+            _bbqService = bbqService;
+            _invateService = invateService;
         }
 
         [Function(nameof(RunModerateBbq))]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "put", Route = "churras/{id}/moderar")] HttpRequestData req, string id)
         {
             var moderationRequest = await req.Body<ModerateBbqRequest>();
-
-            var bbq = await _repository.GetAsync(id);
-
-            bbq.Apply(new BbqStatusUpdated(moderationRequest.GonnaHappen, moderationRequest.TrincaWillPay));
-
-            var lookups = await _snapshots.AsQueryable<Lookups>("Lookups").SingleOrDefaultAsync();
-
-            foreach (var personId in lookups.PeopleIds)
+            if (moderationRequest is null)
             {
-                var person = await _persons.GetAsync(personId);
-                var @event = new PersonHasBeenInvitedToBbq(bbq.Id, bbq.Date, bbq.Reason);
-                person.Apply(@event);
-                await _persons.SaveAsync(person);
+                return await req.CreateResponse(HttpStatusCode.BadRequest, "input is required.");
             }
 
-            await _repository.SaveAsync(bbq);
+            var churras = await _bbqService.UpdateAsync(id, moderationRequest.GonnaHappen, moderationRequest.TrincaWillPay);
+            await _invateService.UpdateAsync(churras, moderationRequest.GonnaHappen);
 
-            return await req.CreateResponse(System.Net.HttpStatusCode.OK, bbq.TakeSnapshot());
+            return await req.CreateResponse(churras is null ? HttpStatusCode.BadRequest : HttpStatusCode.Created, churras?.TakeSnapshot());
         }
     }
 }

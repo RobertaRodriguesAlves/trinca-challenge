@@ -17,7 +17,7 @@ namespace Domain.Services
         private readonly IBbqRepository _bbqRepository;
 
         public InviteService(
-            SnapshotStore snapshot, 
+            SnapshotStore snapshot,
             IPersonRepository repository,
             IBbqRepository bbqRepository)
         {
@@ -51,7 +51,7 @@ namespace Domain.Services
             {
                 var lookups = await _snapshot.AsQueryable<Lookups>("Lookups").SingleOrDefaultAsync();
 
-                foreach (var personId in lookups.PeopleIds)
+                foreach (var personId in lookups.PeopleIds.Except(lookups.ModeratorIds))
                 {
                     var person = await _repository.GetAsync(personId);
                     if (person is null)
@@ -59,9 +59,12 @@ namespace Domain.Services
                         continue;
                     }
 
-                    if (gonnaHappen && !person!.Invites.Any(p => p.Bbq == churras!.Id))
+                    if (gonnaHappen)
                     {
-                        person.Apply(new PersonHasBeenInvitedToBbq(person.Id, churras!.Id, churras!.Date, churras!.Reason));
+                        if (!person!.Invites.Any(p => p.Bbq == churras!.Id))
+                        {
+                            person.Apply(new PersonHasBeenInvitedToBbq(person.Id, churras!.Id, churras!.Date, churras!.Reason));
+                        }
                     }
                     else
                     {
