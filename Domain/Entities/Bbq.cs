@@ -1,15 +1,20 @@
-﻿using System;
-using Domain.Events;
+﻿using Domain.Events;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 
 namespace Domain.Entities
 {
     public class Bbq : AggregateRoot
     {
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
         public BbqStatus Status { get; set; }
         public DateTime Date { get; set; }
         public bool IsTrincasPaying { get; set; }
-        public void When(ThereIsSomeoneElseInTheMood @event)
+        public List<ShoppingList> Shop { get; set; } = new List<ShoppingList>();
+
+        internal void When(ThereIsSomeoneElseInTheMood @event)
         {
             Id = @event.Id.ToString();
             Date = @event.Date;
@@ -17,7 +22,7 @@ namespace Domain.Entities
             Status = BbqStatus.New;
         }
 
-        public void When(BbqStatusUpdated @event)
+        internal void When(BbqStatusUpdated @event)
         {
             if (@event.GonnaHappen)
                 Status = BbqStatus.PendingConfirmations;
@@ -28,13 +33,34 @@ namespace Domain.Entities
                 IsTrincasPaying = true;
         }
 
-        public void When(InviteWasDeclined @event)
+        internal void When(InviteWasAccepted @event)
         {
-            //TODO:Deve ser possível rejeitar um convite já aceito antes.
-            //Se este for o caso, a quantidade de comida calculada pelo aceite anterior do convite
-            //deve ser retirado da lista de compras do churrasco.
-            //Se ao rejeitar, o número de pessoas confirmadas no churrasco for menor que sete,
-            //o churrasco deverá ter seu status atualizado para “Pendente de confirmações”. 
+            var invite = Shop.FirstOrDefault(bbq => bbq.BbqId == @event.InviteId && bbq.PersonId == @event.PersonId);
+            if (invite is null)
+            {
+                var shopList = new ShoppingList();
+                shopList.SetShopList(@event!.InviteId, @event!.PersonId, @event.IsVeg);
+                Shop.Add(shopList);
+            }
+
+            if (Shop.GroupBy(bbq => bbq.BbqId).Count() >= 7 && Status != BbqStatus.Confirmed)
+            {
+                Status = BbqStatus.Confirmed;
+            }
+        }
+
+        internal void When(InviteWasDeclined @event)
+        {
+            var invite = Shop.FirstOrDefault(bbq => bbq.BbqId == @event.InviteId && bbq.PersonId == @event.PersonId);
+            if (invite != null)
+            {
+                Shop.RemoveAll(s => s.PersonId == invite.PersonId);
+            }
+
+            if (Shop.GroupBy(bbq => bbq.BbqId).Count() < 7 && Status != BbqStatus.PendingConfirmations)
+            {
+                Status = BbqStatus.PendingConfirmations;
+            }
         }
 
         public object TakeSnapshot()
@@ -44,7 +70,14 @@ namespace Domain.Entities
                 Id,
                 Date,
                 IsTrincasPaying,
-                Status = Status.ToString()
+                Status = Status.ToString(),
+                Shop = Shop
+                     .GroupBy(bbq => bbq.BbqId)
+                     .Select(bbq => new
+                     {
+                         Vegetables = $"{bbq.Sum(v => v.Vegetable) / 1000} KG",
+                         Meat = $"{bbq.Sum(v => v.Meat) / 1000} KG"
+                     })
             };
         }
     }

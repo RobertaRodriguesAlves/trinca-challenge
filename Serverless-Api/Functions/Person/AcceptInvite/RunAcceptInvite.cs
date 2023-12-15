@@ -1,36 +1,37 @@
-﻿using Domain.Events;
-using Domain.Entities;
-using Domain.Repositories;
+﻿using Domain.Entities;
+using Domain.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using System.Net;
 
 namespace Serverless_Api
 {
     public partial class RunAcceptInvite
     {
         private readonly Person _user;
-        private readonly IPersonRepository _repository;
-        public RunAcceptInvite(IPersonRepository repository, Person user)
+        private readonly IInviteService _service;
+        public RunAcceptInvite(IInviteService service, Person user)
         {
             _user = user;
-           _repository = repository;
+           _service = service;
         }
 
         [Function(nameof(RunAcceptInvite))]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "put", Route = "person/invites/{inviteId}/accept")] HttpRequestData req, string inviteId)
         {
             var answer = await req.Body<InviteAnswer>();
+            if (answer is null)
+            {
+                return await req.CreateResponse(HttpStatusCode.BadRequest, "input is required.");
+            }
 
-            var person = await _repository.GetAsync(_user.Id);
-           
-            person.Apply(new InviteWasAccepted { InviteId = inviteId, IsVeg = answer.IsVeg, PersonId = person.Id });
+            var person = await _service.AcceptInvitationAsync(_user.Id, inviteId, answer!.IsVeg);
+            if (person is null)
+            {
+                return req.CreateResponse(HttpStatusCode.NoContent);
+            }
 
-            await _repository.SaveAsync(person);
-
-            //implementar efeito do aceite do convite no churrasco
-            //quando tiver 7 pessoas ele está confirmado
-
-            return await req.CreateResponse(System.Net.HttpStatusCode.OK, person.TakeSnapshot());
+            return await req.CreateResponse(HttpStatusCode.OK, person!.TakeSnapshot());
         }
     }
 }
